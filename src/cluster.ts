@@ -16,11 +16,10 @@
 
 import {promisifyAll} from '@google-cloud/promisify';
 import {CallOptions, Operation as GaxOperation} from 'google-gax';
-import {ServiceError} from '@grpc/grpc-js';
-
 import {google as btTypes} from '../proto/bigtable';
 import {Bigtable} from '.';
 import {Instance} from './instance';
+import { ServiceError } from 'grpc';
 
 export interface GenericCallback<T> {
   (err?: ServiceError | null, apiResponse?: T | null): void;
@@ -46,7 +45,7 @@ export type BooleanResponse = [boolean];
 export type GetClusterResponse = [ICluster, IOperation];
 export type MetadataResponse = [Metadata, IOperation];
 
-export type CreateClusterCallback = GenericCallback<IOperation>;
+export type CreateClusterCallback = GenericClusterCallback<ICluster>;
 export type DeleteClusterCallback = GenericCallback<IOperation>;
 export type ExistsClusterCallback = GenericCallback<boolean>;
 export type GetClusterCallback = GenericClusterCallback<ICluster>;
