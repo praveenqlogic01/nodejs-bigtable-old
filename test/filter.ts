@@ -16,21 +16,23 @@
 
 import * as assert from 'assert';
 import * as proxyquire from 'proxyquire';
+import * as FilterTypes from '../src/filter';
 const sn = require('sinon');
+import { google } from '../proto/bigtable';
 
 const sinon = sn.createSandbox();
 
 const FakeMutation = {
-  convertToBytes: sinon.spy(function(value) {
+  convertToBytes: sinon.spy(function(value:string) {
     return value;
   }),
   createTimeRange: sinon.stub(),
 };
 
 describe('Bigtable/Filter', function() {
-  let Filter;
-  let FilterError;
-  let filter;
+  let Filter:typeof FilterTypes.Filter;
+  let FilterError:typeof FilterTypes.FilterError;
+  let filter:FilterTypes.Filter;
 
   before(function() {
     const Fake = proxyquire('../src/filter', {
@@ -179,37 +181,37 @@ describe('Bigtable/Filter', function() {
       const fakeFilter = [
         {
           row: 'a',
-        },
+        } as {} as FilterTypes.Filter,
         {
           value: 'b',
-        },
+        } as {} as FilterTypes.Filter,
       ];
 
       Filter.parse(fakeFilter);
 
-      assert.strictEqual(Filter.prototype.row.callCount, 1);
-      assert(Filter.prototype.row.calledWithExactly('a'));
+      assert.strictEqual((Filter.prototype.row as sinon.SinonStub).callCount, 1);
+      assert((Filter.prototype.row as sinon.SinonSpy).calledWithExactly('a'));
 
-      assert.strictEqual(Filter.prototype.value.callCount, 1);
-      assert(Filter.prototype.value.calledWithExactly('b'));
+      assert.strictEqual((Filter.prototype.value as sinon.SinonStub).callCount, 1);
+      assert((Filter.prototype.value as sinon.SinonSpy).calledWithExactly('b'));
     });
 
-    it('should throw an error for unknown filters', function() {
+    it('should throw an error for unknown filters',  function() {
       const fakeFilter = [
         {
           wat: 'a',
-        },
+        } as {} as FilterTypes.Filter,
       ];
 
       assert.throws(Filter.parse.bind(null, fakeFilter), FilterError);
     });
 
     it('should return the filter in JSON form', function() {
-      const fakeProto = {a: 'a'};
+      const fakeProto = {a: 'a'} as google.bigtable.v2.IRowFilter;
       const fakeFilter = [
-        {
+        { 
           column: 'a',
-        },
+        } as {} as FilterTypes.Filter,
       ];
 
       const stub = sinon.stub(Filter.prototype, 'toProto').returns(fakeProto);
@@ -217,7 +219,7 @@ describe('Bigtable/Filter', function() {
       const parsedFilter = Filter.parse(fakeFilter);
 
       assert.strictEqual(parsedFilter, fakeProto);
-      assert.strictEqual(Filter.prototype.toProto.callCount, 1);
+      assert.strictEqual((Filter.prototype.toProto as sinon.SinonStub).callCount, 1);
 
       stub.restore();
     });
@@ -268,7 +270,7 @@ describe('Bigtable/Filter', function() {
     it('should handle a binary encoded buffer regex filter', function(done) {
       const column = {
         name: Buffer.from('æ', 'binary'),
-      };
+      } as {} as FilterTypes.ColumnRange;
 
       filter.set = function(filterName, value) {
         assert.strictEqual(filterName, 'columnQualifierRegexFilter');
@@ -336,7 +338,7 @@ describe('Bigtable/Filter', function() {
         test: {a: 'a'},
         pass: {b: 'b'},
         fail: {c: 'c'},
-      };
+      } as {} as FilterTypes.FilterCondition;
 
       const spy = sinon.stub(Filter, 'parse').returnsArg(0);
 
@@ -381,7 +383,7 @@ describe('Bigtable/Filter', function() {
 
   describe('interleave', function() {
     it('should create an interleave filter', function(done) {
-      const fakeFilters = [{}, {}, {}];
+      const fakeFilters = [{}, {}, {}] as FilterTypes.Filter[];
 
       const spy = sinon.stub(Filter, 'parse').returnsArg(0);
 
@@ -453,7 +455,7 @@ describe('Bigtable/Filter', function() {
     it('should set the row sample filter', function(done) {
       const row = {
         sample: 10,
-      };
+      } as FilterTypes.RowFilter;
 
       filter.set = function(filterName, value) {
         assert.strictEqual(filterName, 'rowSampleFilter');
@@ -500,7 +502,7 @@ describe('Bigtable/Filter', function() {
 
       filter.set(key, value);
 
-      assert.strictEqual(filter.filters_[0][key], value);
+      assert.strictEqual((filter.filters_[0] as any)[key], value);
     });
   });
 
@@ -523,7 +525,7 @@ describe('Bigtable/Filter', function() {
       const fakeTimeRange = {
         start: 10,
         end: 10,
-      };
+      } as {} as FilterTypes.Times;
 
       const spy = FakeMutation.createTimeRange.returns(fakeTimeRange);
 
@@ -559,7 +561,7 @@ describe('Bigtable/Filter', function() {
 
       const filterProto = filter.toProto();
 
-      assert.strictEqual(filterProto.chain.filters, filter.filters_);
+      assert.strictEqual(filterProto!.chain!.filters, filter.filters_);
     });
   });
 
